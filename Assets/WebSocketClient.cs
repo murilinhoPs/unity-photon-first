@@ -8,18 +8,17 @@ using Newtonsoft.Json.Serialization;
 [Serializable]
 class Jogador
 {
-    private string _event;
-    private string name;
-    private Vector2 position;
+    public string _event;
+    public string name;
+    public Vector2 position;
 
-    public Jogador(string name, Vector2 position)
+    public string SaveToString()
     {
-        this.name = name;
-        this.position = position;
-        _event = "player_pos";
+        return JsonUtility.ToJson(this);
     }
 
-    public override string ToString() => "Event - " + _event + ", Nome Game Object: " + name + " Posição: " + "x: " + position.x +
+    public override string ToString() => "Event - " + _event + ", Nome Game Object: " + name + " Posição: " + "x: " +
+                                         position.x +
                                          ", y: " + position.y;
 }
 
@@ -40,7 +39,7 @@ public class WebSocketClient : MonoBehaviour
 #if !UNITY_WEBGL || UNITY_EDITOR
         _webSocket.DispatchMessageQueue();
 #endif
-        
+
         if (Input.GetMouseButtonDown(0))
         {
             Emit();
@@ -49,10 +48,10 @@ public class WebSocketClient : MonoBehaviour
 
     private void Emit()
     {
-        var player = new Jogador(gameObject.name, transform.position);
+        var player = new Jogador { name = gameObject.name, position = transform.position, };
 
-        _webSocket.SendText(player.ToString());
-        var playerData = JsonUtility.ToJson(player);
+        var playerData = player.SaveToString();
+        print(playerData);
         _webSocket.SendText(playerData);
     }
 
@@ -60,10 +59,7 @@ public class WebSocketClient : MonoBehaviour
     {
         _webSocket = new WebSocket(socketUrl);
 
-        _webSocket.OnOpen += () =>
-        {
-            Debug.Log("Connection open!");
-        };
+        _webSocket.OnOpen += () => { Debug.Log("Connection open!"); };
 
         _webSocket.OnError += (e) => { Debug.Log("Error! " + e); };
 
@@ -81,7 +77,7 @@ public class WebSocketClient : MonoBehaviour
             var message = System.Text.Encoding.UTF8.GetString(bytes);
             Debug.Log("OnMessage! " + message);
         };
-        
+
         // waiting for messages
         await _webSocket.Connect();
     }
